@@ -8,7 +8,7 @@ __global__ void matmul_naive_1(double *a, double *b, double *c, int matrix_dim) 
   const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
     if (x < matrix_dim && y < matrix_dim) {
-        float tmp = 0.0;
+        double tmp = 0.0;
         for (int i = 0; i < matrix_dim; ++i) {
             tmp += a[x * matrix_dim + i] * b[i * matrix_dim + y];
         }
@@ -21,7 +21,7 @@ __global__ void matmul_naive_2(double *a, double *b, double *c, int matrix_dim) 
   const int y = blockIdx.y * blockDim.y + threadIdx.y;
 
     if (x < matrix_dim && y < matrix_dim) {
-        float tmp = 0.0;
+        double tmp = 0.0;
         for (int i = 0; i < matrix_dim; ++i) {
             tmp += a[y * matrix_dim + i] * b[i * matrix_dim + x];
         }
@@ -38,7 +38,7 @@ __global__ void matmul_block(double *a, double *b, double *c, int matrix_dim) {
     __shared__ double a_temp[BLOCK_SIZE*BLOCK_SIZE];
     __shared__ double b_temp[BLOCK_SIZE*BLOCK_SIZE];
     __shared__ double c_temp[BLOCK_SIZE*BLOCK_SIZE];
-    c_temp[threadIdx.y + threadIdx.x] = 0.0;
+    c_temp[threadIdx.y * BLOCK_SIZE + threadIdx.x] = 0.0;
 
     for (int k = 0; k != N_BLOCKS; k++){
         a_temp[threadIdx.y * BLOCK_SIZE + threadIdx.x] = 
@@ -49,7 +49,7 @@ __global__ void matmul_block(double *a, double *b, double *c, int matrix_dim) {
 
         __syncthreads();
 
-        float tmp = 0.0;
+        double tmp = 0.0;
         for (int i = 0; i != BLOCK_SIZE; ++i) {
             tmp += a_temp[threadIdx.y * BLOCK_SIZE + i] * b_temp[i * BLOCK_SIZE + threadIdx.x];
         }
@@ -105,7 +105,7 @@ int main() {
 
     double *a, *b, *c_host, *c_device; 
     double *d_a, *d_b, *d_c;
-    const int N = 2; 
+    const int N = 1024; 
     const int NN = pow(N, 2);
     double random_lowest = 1.0; 
     double random_highest = 5.0; 
@@ -128,7 +128,7 @@ int main() {
 
     for (int x = 0; x != N; x++){
         for (int y = 0; y != N; y++){
-            float tmp = 0.0;
+            double tmp = 0.0;
             for (int i = 0; i != N; ++i) {
                 tmp += a[x * N + i] * b[i * N + y];
             }
